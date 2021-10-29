@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const { Schema,model } = mongoose;
-const encrypt = require("mongoose-encryption");
+const md5 = require('md5');  //a JavaScript function for hashing messages with MD5.
 
 const app = express();
 
@@ -21,11 +21,6 @@ const userSchema = new Schema({
   password:String
 })
 
-//This must happen before we create the model since the Schema
-//will be used in the model.
-
-userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["password"]}); //Only encrpt the password field so that it's easy to search for the email.
-//We don't have to change other code since mongoose encrpt will encrpt our password when we use .save() and will decrypt when we use .find()
 
 const User = model("User",userSchema);
 
@@ -39,7 +34,7 @@ app.route("/login")
   })
   .post(function(req,res){
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
     User.findOne({email:username},function(err,doc){
       //cannot put password into the filter after we use mongoose encrption but we can use it
       //in the callback function
@@ -52,6 +47,7 @@ app.route("/login")
       }else{
         console.log(err);
         res.send(err);
+
       }
     })
   });
@@ -65,7 +61,7 @@ app.route("/register")
   .post(function(req,res){
     const newUser = new User({
       email:req.body.username,
-      password:req.body.password
+      password:md5(req.body.password)
     });
 
     newUser.save(function(err){
