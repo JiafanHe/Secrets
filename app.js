@@ -45,7 +45,7 @@ const User = model("User",userSchema);
 // CHANGE: USE "createStrategy" INSTEAD OF "authenticate"
 passport.use(User.createStrategy());
 
-passport.serializeUser(User.serializeUser());   //creates that fortune cookie and stuffs the message namely our users identifications into the cookie. 
+passport.serializeUser(User.serializeUser());   //creates that fortune cookie and stuffs the message namely our users identifications into the cookie.
 passport.deserializeUser(User.deserializeUser());  //allows passport to be able to crumble the cookie and discover the message inside which is who this user is.
 //----------------------------------------------------------------------------
 
@@ -68,9 +68,31 @@ app.route("/register")
     res.render("register");
   })
   .post(function(req,res){
-
-
+    //From passport-local-mongooes package
+    User.register({username:req.body.username, active: true}, req.body.password, function(err, user) {
+      if (err) {
+        console.log(err);
+        res.redirect("/");
+      }else{
+        //authenticate this user
+        passport.authenticate("local")(req,res,function(){
+          res.redirect("/secrets");
+        });
+      }
+    });
   });
+
+  app.route("/secrets")
+    .get(function(req,res){
+      //check whether the user is logged in
+      if(req.isAuthenticated()){
+        res.render("secrets");
+      }else{
+        res.redirect("/login");
+      }
+    });
+
+
 
 app.listen(3000, function() {
   console.log("Server started on port 3000");
