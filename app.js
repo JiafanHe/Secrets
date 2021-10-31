@@ -100,15 +100,22 @@ app.route("/register")
     });
   });
 
-  app.route("/secrets")
-    .get(function(req,res){
-      //check whether the user is logged in
-      if(req.isAuthenticated()){
-        res.render("secrets");
-      }else{
-        res.redirect("/login");
-      }
-    });
+app.route("/secrets")
+  .get(function(req,res){
+    //check whether the user is logged in
+    if(req.isAuthenticated()){
+      res.render("secrets");
+    }else{
+      res.redirect("/login");
+    }
+  });
+
+app.route("/logout")
+  .get(function(req,res){
+    //passport provides a method to logout
+    req.logout();
+    res.redirect("/");
+  })
 
 
 
