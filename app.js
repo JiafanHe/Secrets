@@ -4,9 +4,10 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const { Schema,model } = mongoose;
-const md5 = require('md5');  //a JavaScript function for hashing messages with MD5.
-//Hash function cannot be reversed back and should be injective.
-const bcrypt = require('bcrypt');  //Use bcrypt to help you hash passwords
+const session = require('express-session');
+const passport = require("passport");
+const passportLocalMongoose = require("passport-local-mongoose");
+
 
 const app = express();
 
@@ -16,6 +17,17 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(express.static("public"));
 
+//set up according to express-session document
+app.use(session({
+  secret: 'Our little secret.',
+  resave: false,
+  saveUninitialized: false
+}))
+
+//set up according to passport document
+app.use(passport.initialize());
+app.use(passport.session());
+
 mongoose.connect("mongodb://localhost:27017/userDB");
 
 const userSchema = new Schema({
@@ -23,8 +35,19 @@ const userSchema = new Schema({
   password:String
 })
 
+//-------------------------set up according to passport-local-mongoose---------
+userSchema.plugin(passportLocalMongoose);  //Plugin Passport-Local-Mongoose
 
 const User = model("User",userSchema);
+
+//-----------------Configure Passport/Passport-Local---------------------------
+
+// CHANGE: USE "createStrategy" INSTEAD OF "authenticate"
+passport.use(User.createStrategy());
+
+passport.serializeUser(User.serializeUser());   //creates that fortune cookie and stuffs the message namely our users identifications into the cookie. 
+passport.deserializeUser(User.deserializeUser());  //allows passport to be able to crumble the cookie and discover the message inside which is who this user is.
+//----------------------------------------------------------------------------
 
 app.get("/",function(req,res){
   res.render("home");
@@ -35,28 +58,7 @@ app.route("/login")
     res.render("login");
   })
   .post(function(req,res){
-    const username = req.body.username;
-    const password = req.body.password;
-    User.findOne({email:username},function(err,doc){
-      if(!err){
-        if(doc){
-          bcrypt.compare(password, doc.password, function(err, result) {
-            if(result==true){
-                res.render("secrets");
-            }else{
-              res.send("Password is wrong")
-            }
-          });
-        }
-        else{
-          res.send("No such user.")
-        }
-      }else{
-        console.log(err);
-        res.send(err);
 
-      }
-    })
   });
 
 
@@ -66,19 +68,7 @@ app.route("/register")
     res.render("register");
   })
   .post(function(req,res){
-    bcrypt.hash(req.body.password, 10, function(err, hash) {
-      const newUser = new User({
-        email:req.body.username,
-        password:hash
-      });
-      newUser.save(function(err){
-        if(!err){
-          res.render("secrets");
-        }else{
-          res.send(err);
-        }
-      })
-    });
+
 
   });
 
