@@ -7,6 +7,8 @@ const { Schema,model } = mongoose;
 const session = require('express-session');
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const findOrCreate = require('mongoose-findorcreate');   //require this madeup function in the documentation or write it by ourselves
 
 
 const app = express();
@@ -37,6 +39,7 @@ const userSchema = new Schema({
 
 //-------------------------set up according to passport-local-mongoose---------
 userSchema.plugin(passportLocalMongoose);  //Plugin Passport-Local-Mongoose
+userSchema.plugin(findOrCreate); //Plugin findOrCreate
 
 const User = model("User",userSchema);
 
@@ -48,6 +51,19 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());   //creates that fortune cookie and stuffs the message namely our users identifications into the cookie.
 passport.deserializeUser(User.deserializeUser());  //allows passport to be able to crumble the cookie and discover the message inside which is who this user is.
 //----------------------------------------------------------------------------
+
+passport.use(new GoogleStrategy({       //Cannot put before app.use(session) otherwise it won't save the user login sessions
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/secrets"   //same as the authorized redirect URIs set up in the credentials in google developer console
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
+
 
 app.get("/",function(req,res){
   res.render("home");
@@ -78,8 +94,6 @@ app.route("/login")
     });
 
   });
-
-
 
 app.route("/register")
   .get(function(req,res){
@@ -117,6 +131,8 @@ app.route("/logout")
     res.redirect("/");
   })
 
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ["profile"] }));  //From http://www.passportjs.org/packages/passport-google-oauth20/
 
 
 app.listen(3000, function() {
