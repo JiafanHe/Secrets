@@ -34,7 +34,10 @@ mongoose.connect("mongodb://localhost:27017/userDB");
 
 const userSchema = new Schema({
   email:String,
-  password:String
+  password:String,
+  googleId:String     //add this field to our schema so that findOrCreate method can store the profile.id into the
+                      // googleID field. So that we don't create another document in our database when the same google
+                      //account log in
 })
 
 //-------------------------set up according to passport-local-mongoose---------
