@@ -43,13 +43,18 @@ userSchema.plugin(findOrCreate); //Plugin findOrCreate
 
 const User = model("User",userSchema);
 
-//-----------------Configure Passport/Passport-Local---------------------------
+//-----------------Set up the sessions according to passport so that it can work with any kind of authentication other than local---------------------------
+//http://www.passportjs.org/docs/configure/
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
 
-// CHANGE: USE "createStrategy" INSTEAD OF "authenticate"
-passport.use(User.createStrategy());
+passport.deserializeUser(function(id, done) {
+  User.findById(id, function(err, user) {
+    done(err, user);
+  });
+});
 
-passport.serializeUser(User.serializeUser());   //creates that fortune cookie and stuffs the message namely our users identifications into the cookie.
-passport.deserializeUser(User.deserializeUser());  //allows passport to be able to crumble the cookie and discover the message inside which is who this user is.
 //----------------------------------------------------------------------------
 
 passport.use(new GoogleStrategy({       //Cannot put before app.use(session) otherwise it won't save the user login sessions
