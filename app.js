@@ -131,8 +131,15 @@ app.route("/logout")
     res.redirect("/");
   })
 
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ["profile"] }));  //From http://www.passportjs.org/packages/passport-google-oauth20/
+app.get("/auth/google",
+  passport.authenticate("google", { scope: ["profile"] }));  //From http://www.passportjs.org/packages/passport-google-oauth20/
+
+app.get("/auth/google/secrets",    //same as authorized redirect URIs
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  function(req, res) {
+    // Successful authentication, redirect secrets.
+    res.redirect('/secrets');
+  });
 
 
 app.listen(3000, function() {
