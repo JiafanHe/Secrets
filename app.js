@@ -35,8 +35,8 @@ mongoose.connect("mongodb://localhost:27017/userDB");
 const userSchema = new Schema({
   email:String,
   password:String,
-  googleId:String     //add this field to our schema so that findOrCreate method can store the profile.id into the
-                      // googleID field. So that we don't create another document in our database when the same google
+  googleId:String,     //add this field to our schema so that findOrCreate method can store the profile.id into the
+  secret:String       // googleID field. So that we don't create another document in our database when the same google
                       //account log in
 })
 
@@ -159,6 +159,21 @@ app.route("/submit")
     }else{
       res.redirect("/login");
     }
+  })
+  .post(function(req,res){
+    const submittedSecret = req.body.secret;
+    User.findById(req.user.id,function(err,foundUser){  //find the id of the current user by req.user.id
+      if(err){
+        console.log(err);
+      }else{
+        if(foundUser){
+          foundUser.secret = submittedSecret;   //update the secret field
+          foundUser.save(function(){
+            res.redirect("/secrets");
+          });
+        }
+      }
+    })
   })
 
 app.listen(3000, function() {
