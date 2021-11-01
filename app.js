@@ -48,6 +48,8 @@ const User = model("User",userSchema);
 
 //-----------------Set up the sessions according to passport so that it can work with any kind of authentication other than local---------------------------
 //http://www.passportjs.org/docs/configure/
+passport.use(User.createStrategy());
+
 passport.serializeUser(function(user, done) {
   done(null, user.id);
 });
@@ -128,6 +130,7 @@ app.route("/secrets")
     if(req.isAuthenticated()){
       res.render("secrets");
     }else{
+      console.log(req.isAuthenticated());
       res.redirect("/login");
     }
   });
@@ -149,6 +152,14 @@ app.get("/auth/google/secrets",    //same as authorized redirect URIs
     res.redirect('/secrets');
   });
 
+app.route("/submit")
+  .get(function(req,res){
+    if(req.isAuthenticated()){
+      res.render("submit");
+    }else{
+      res.redirect("/login");
+    }
+  })
 
 app.listen(3000, function() {
   console.log("Server started on port 3000");
