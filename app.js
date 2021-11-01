@@ -126,13 +126,13 @@ app.route("/register")
 
 app.route("/secrets")
   .get(function(req,res){
-    //check whether the user is logged in
-    if(req.isAuthenticated()){
-      res.render("secrets");
-    }else{
-      console.log(req.isAuthenticated());
-      res.redirect("/login");
-    }
+    User.find({"secrets":{$ne:null}}, function(err,docs){
+      if(err){
+        console.log(err);
+      }else{
+        res.render("secrets",{usersWithSecrets:docs});
+      }
+    });
   });
 
 app.route("/logout")
